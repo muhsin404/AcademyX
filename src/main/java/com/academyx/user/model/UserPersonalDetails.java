@@ -1,4 +1,4 @@
-package com.academyx.registration.model;
+package com.academyx.user.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -14,11 +15,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 
 @Entity
-public class UserPersonelDetails {
+public class UserPersonalDetails {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long personelId;
+	private Long personalId;
 	
 	@Column
 	private String fullName;
@@ -38,7 +39,7 @@ public class UserPersonelDetails {
 	@Column
 	private String profileImage;
 	
-	@OneToOne
+	@OneToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name="userId", referencedColumnName = "userId")
 	private UserCredentials userCredentials;
 	
@@ -46,8 +47,8 @@ public class UserPersonelDetails {
 	@Column( name ="created_time", updatable = false)
 	private LocalDateTime createdTime;
 
-	public Long getPersonelId() {
-		return personelId;
+	public Long getPersonalId() {
+		return personalId;
 	}
 
 	public UserCredentials getUserCredentials() {
@@ -58,8 +59,8 @@ public class UserPersonelDetails {
 		this.userCredentials = userCredentials;
 	}
 
-	public void setPersonelId(Long personelId) {
-		this.personelId = personelId;
+	public void setPersonalId(Long personalId) {
+		this.personalId = personalId;
 	}
 
 	public LocalDateTime getCreatedTime() {

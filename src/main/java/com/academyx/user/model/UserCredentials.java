@@ -1,10 +1,12 @@
-package com.academyx.registration.model;
+package com.academyx.user.model;
 
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,16 +36,16 @@ public class UserCredentials {
 	
 	
 	
-	@OneToOne(mappedBy = "userCredentials")
-	private UserPersonelDetails userPersonelDetails;
+	@OneToOne(mappedBy = "userCredentials", cascade = CascadeType.ALL , fetch = FetchType.LAZY)
+	private UserPersonalDetails userPersonalDetails;
 	
-	public UserPersonelDetails getUserPersonelDetails() {
-		return userPersonelDetails;
+	public UserPersonalDetails getUserPersonalDetails() {
+		return userPersonalDetails;
 	}
-	public void setUserPersonelDetails(UserPersonelDetails userPersonelDetails) {
-		this.userPersonelDetails = userPersonelDetails;
+	public void setUserPersonalDetails(UserPersonalDetails userPersonalDetails) {
+		this.userPersonalDetails = userPersonalDetails;
 	}
-	public Long getUserId() {
+	public Long getuserId() {
 		return userId;
 	}
 	public void setUserId(Long userId) {
