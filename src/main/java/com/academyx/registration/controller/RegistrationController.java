@@ -10,13 +10,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.academyx.common.util.Utils;
 import com.academyx.registration.service.RegistrationService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 public class RegistrationController {
 
 	@Autowired
 	public RegistrationService registrationService;
+	
+	@Autowired
+	private Utils utils;
 
 	@PostMapping("/register")
 	public ResponseEntity<Map<String, Object>> registerUser(@RequestBody HashMap<String, Object> data) {
@@ -67,5 +74,46 @@ public class RegistrationController {
 		}
 	}
 	
+	@PostMapping("/addUser")
+	public ResponseEntity<Map<String, Object>> addUser(@RequestBody HashMap<String, Object> data) {
+		Map<String, Object> response = new HashMap<>();
+		
+		if(data.get("email").toString()==null || data.get("email").toString().isEmpty()||
+		   data.get("roleToBeAssigned").toString()==null || data.get("roleToBeAssigned").toString().isEmpty())
+		{
+			response=utils.createErrorResponse("Email and Role is required");
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+		}
+		else
+		{
+			response=registrationService.addUser(data);
+			if (response.get("status").toString().equals("error")) {
+				return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
 
+			} else {
+				return ResponseEntity.ok(response);
+			}
+		}
+		}
+	
+	@GetMapping("/acceptInvitation")
+	public ResponseEntity<Map<String, Object>> acceptInvitation(@RequestParam("token") String token){
+		Map<String, Object> response = new HashMap<>();
+		try {
+			response=registrationService.acceptInvite(token);
+			if (response.get("status").toString().equals("error")) {
+				return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+
+			} else {
+				return ResponseEntity.ok(response);
+			}
+			
+		} catch (Exception e) {
+			response.put("status", "error");
+		      response.put("message", "An unexpected error occurred while accepting the invitation.");
+		      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+		}
+	}
+	
 }
+	
