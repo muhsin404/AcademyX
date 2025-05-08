@@ -227,5 +227,4 @@ public class RegistrationService {
 
         return utils.createSuccessResponse("Invitation accepted");
     }
-
 }

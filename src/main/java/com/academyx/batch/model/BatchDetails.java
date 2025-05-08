@@ -149,5 +149,10 @@ public class BatchDetails {
 	@UpdateTimestamp
 	@Column( name ="updated_time", updatable = true)
 	private LocalDateTime updatedTime;
+	
 
 }
+
+
+
+
