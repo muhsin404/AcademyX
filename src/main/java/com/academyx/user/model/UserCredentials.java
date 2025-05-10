@@ -45,7 +45,7 @@ public class UserCredentials {
 	public void setUserPersonalDetails(UserPersonalDetails userPersonalDetails) {
 		this.userPersonalDetails = userPersonalDetails;
 	}
-	public Long getuserId() {
+	public Long getUserId() {
 		return userId;
 	}
 	public void setUserId(Long userId) {

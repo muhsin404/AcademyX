@@ -19,7 +19,7 @@ public class TimetableEntryDTO {
         this.endTime     = timetable.getEndTime();
         this.subjectId   = timetable.getSubject().getSubjectId();
         this.subjectName = timetable.getSubject().getSubjectName();
-        this.staffId     = timetable.getStaff().getuserId();
+        this.staffId     = timetable.getStaff().getUserId();
         this.staffName   = timetable.getStaff().getUserPersonalDetails().getFullName();
     }
 

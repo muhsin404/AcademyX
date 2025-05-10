@@ -51,4 +51,8 @@ public interface UserBatchRelationRepository extends JpaRepository<UserBatchRela
     		    @Param("batchId") Long batchId,
     		    @Param("organizationId") Long organizationId);
 
+    
+    @Query("SELECT CASE WHEN COUNT(ub) > 0 THEN true ELSE false END FROM UserBatchRelation ub WHERE ub.userCredentials.userId = :userId AND ub.batchDetails.batchId = :batchId")
+    boolean existsByUserIdAndBatchId(@Param("userId") Long userId, @Param("batchId") Long batchId);
+    
 }
