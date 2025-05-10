@@ -22,16 +22,13 @@ public class LoginController {
 	
 	@Autowired
 	private LoginService loginService;
-	
-	@Autowired
-	private Utils utils;
-	
+
 	@GetMapping("/check")
 	public String checking() {
 		return "working";
 	}
 
-	@PostMapping("/userLogin")
+	@PostMapping("/userLogin") 
 	public ResponseEntity<Map<String, Object>> loginCustomer(@RequestBody HashMap<String, Object> data) {
 		Map<String, Object> response = new HashMap<>();
 		
