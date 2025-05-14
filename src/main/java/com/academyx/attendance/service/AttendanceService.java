@@ -119,71 +119,176 @@ public class AttendanceService {
 	}
 	
 	
-	//method to get the attendance of a student based on filters - of a subject using subjectId (of a date / in between date range)
-	// without subject whole attendance of a date or in between date range
+	
 
+//	public Map<String, Object> getStudentAttendanceByDate(Long studentId, LocalDate sessionDate, LocalDate startDate,
+//			LocalDate endDate, Long subjectId) {
+//		Map<String, Object> response = new HashMap<>();
+//
+//		if (studentId == null || studentId <= 0) {
+//			response.put("status", "Error");
+//			response.put("message", "Invalid student ID");
+//			return response;
+//		}
+//
+//		List<AttendanceRecord> records = new ArrayList<>();
+//
+//		try {
+//			if (startDate != null && endDate != null) {
+//				if (endDate.isBefore(startDate)) {
+//					response.put("status", "Error");
+//					response.put("message", "Invalid date range");
+//					return response;
+//				}
+//
+//				if (subjectId != null) {
+//					records = attendanceRecordRepository.findByStudentAndDateRangeAndSubject(studentId, startDate,
+//							endDate, subjectId);
+//				} else {
+//					records = attendanceRecordRepository.findByStudentAndDateBetween(studentId, startDate, endDate);
+//				}
+//			} else {
+//				if (sessionDate == null)
+//					sessionDate = LocalDate.now();
+//
+//				if (subjectId != null) {
+//					records = attendanceRecordRepository.findByStudentAndDateAndSubject(studentId, sessionDate,
+//							subjectId);
+//				} else {
+//					records = attendanceRecordRepository.findByStudentAndDate(studentId, sessionDate);
+//				}
+//			}
+//
+//			if (records.isEmpty()) {
+//				response.put("status", "Error");
+//				response.put("message", "No attendance records found for the given criteria.");
+//				return response;
+//			}
+//
+//			List<StudentAttendanceDTO> attendanceDTOList = records.stream().map(record -> {
+//				var session = record.getSession();
+//				var entry = session.getTimetableEntry();
+//				return new StudentAttendanceDTO(session.getSessionId(), session.getSessionDate(), record.getStatus(),
+//						entry.getSubject().getSubjectName(), entry.getPeriods().getStartTime(),
+//						entry.getPeriods().getEndTime(), entry.getPeriod().getPeriodNumber());
+//			}).collect(Collectors.toList());
+//
+//			response.put("status", "Success");
+//			response.put("message", "Attendance records retrieved successfully");
+//			response.put("attendance", attendanceDTOList);
+//
+//		} catch (Exception e) {
+//			response.put("status", "Error");
+//			response.put("message", "An error occurred while retrieving attendance: " + e.getMessage());
+//		}
+//
+//		return response;
+//	}
+
+	
+	//method to get the attendance of a student based on filters - of a subject using subjectId (of a date / in between date range)
+		// without subject whole attendance of a date or in between date range
+	
 	public Map<String, Object> getStudentAttendanceByDate(Long studentId, LocalDate sessionDate, LocalDate startDate,
 			LocalDate endDate, Long subjectId) {
-		Map<String, Object> response = new HashMap<>();
+	Map<String, Object> response = new HashMap<>();
 
-		if (studentId == null || studentId <= 0) {
-			response.put("status", "Error");
-			response.put("message", "Invalid student ID");
-			return response;
-		}
+	if (studentId == null || studentId <= 0) {
+		response.put("status", "Error");
+		response.put("message", "Invalid student ID");
+		return response;
+	}
 
-		List<AttendanceRecord> records = new ArrayList<>();
+	List<AttendanceRecord> records = new ArrayList<>();
 
-		try {
-			if (startDate != null && endDate != null) {
-				if (endDate.isBefore(startDate)) {
-					response.put("status", "Error");
-					response.put("message", "Invalid date range");
-					return response;
-				}
-
-				if (subjectId != null) {
-					records = attendanceRecordRepository.findByStudentAndDateRangeAndSubject(studentId, startDate,
-							endDate, subjectId);
-				} else {
-					records = attendanceRecordRepository.findByStudentAndDateBetween(studentId, startDate, endDate);
-				}
-			} else {
-				if (sessionDate == null)
-					sessionDate = LocalDate.now();
-
-				if (subjectId != null) {
-					records = attendanceRecordRepository.findByStudentAndDateAndSubject(studentId, sessionDate,
-							subjectId);
-				} else {
-					records = attendanceRecordRepository.findByStudentAndDate(studentId, sessionDate);
-				}
-			}
-
-			if (records.isEmpty()) {
+	try {
+		if (startDate != null && endDate != null) {
+			if (endDate.isBefore(startDate)) {
 				response.put("status", "Error");
-				response.put("message", "No attendance records found for the given criteria.");
+				response.put("message", "Invalid date range");
 				return response;
 			}
 
-			List<StudentAttendanceDTO> attendanceDTOList = records.stream().map(record -> {
-				var session = record.getSession();
-				var entry = session.getTimetableEntry();
-				return new StudentAttendanceDTO(session.getSessionId(), session.getSessionDate(), record.getStatus(),
-						entry.getSubject().getSubjectName(), entry.getPeriods().getStartTime(),
-						entry.getPeriods().getEndTime(), entry.getPeriod().getPeriodNumber());
-			}).collect(Collectors.toList());
+			if (subjectId != null) {
+				records = attendanceRecordRepository.findByStudentAndDateRangeAndSubject(studentId, startDate, endDate, subjectId);
+			} else {
+				records = attendanceRecordRepository.findByStudentAndDateBetween(studentId, startDate, endDate);
+			}
+		} else {
+			if (sessionDate == null)
+				sessionDate = LocalDate.now();
 
-			response.put("status", "Success");
-			response.put("message", "Attendance records retrieved successfully");
-			response.put("attendance", attendanceDTOList);
-
-		} catch (Exception e) {
-			response.put("status", "Error");
-			response.put("message", "An error occurred while retrieving attendance: " + e.getMessage());
+			if (subjectId != null) {
+				records = attendanceRecordRepository.findByStudentAndDateAndSubject(studentId, sessionDate, subjectId);
+			} else {
+				records = attendanceRecordRepository.findByStudentAndDate(studentId, sessionDate);
+			}
 		}
 
-		return response;
+		if (records.isEmpty()) {
+			response.put("status", "Error");
+			response.put("message", "No attendance records found for the given criteria.");
+			return response;
+		}
+
+		// Map attendance records to DTOs
+		List<StudentAttendanceDTO> attendanceDTOList = records.stream().map(record -> {
+			var session = record.getSession();
+			var entry = session.getTimetableEntry();
+			return new StudentAttendanceDTO(
+					session.getSessionId(),
+					session.getSessionDate(),
+					record.getStatus(),
+					entry.getSubject().getSubjectName(),
+					entry.getPeriods().getStartTime(),
+					entry.getPeriods().getEndTime(),
+					entry.getPeriod().getPeriodNumber()
+			);
+		}).collect(Collectors.toList());
+
+		// Daily Attendance Summary Logic
+		Map<LocalDate, List<AttendanceRecord>> groupedByDate = records.stream()
+			    .collect(Collectors.groupingBy(r -> r.getSession().getSessionDate()));
+
+			long totalWorkingDays = groupedByDate.keySet().size();
+			long daysPresent = 0, daysAbsent = 0, daysLeave = 0;
+
+			for (List<AttendanceRecord> dailyRecords : groupedByDate.values()) {
+			    boolean hasPresent = dailyRecords.stream().anyMatch(r -> "PRESENT".equalsIgnoreCase(r.getStatus()));
+			    boolean allLeave = dailyRecords.stream().allMatch(r ->
+			        "LEAVE".equalsIgnoreCase(r.getStatus()) || "MEDICAL_LEAVE".equalsIgnoreCase(r.getStatus()));
+
+			    if (hasPresent) {
+			        daysPresent++;
+			    } else if (allLeave) {
+			        daysLeave++;
+			    } else {
+			        daysAbsent++;
+			    }
+			}
+
+			double attendancePercentage = totalWorkingDays == 0 ? 0.0 : (daysPresent * 100.0) / totalWorkingDays;
+
+
+			Map<String, Object> summary = new HashMap<>();
+			summary.put("totalWorkingDays", totalWorkingDays);
+			summary.put("daysPresent", daysPresent);
+			summary.put("daysAbsent", daysAbsent);
+			summary.put("daysLeave", daysLeave);
+			summary.put("attendancePercentage", attendancePercentage);
+
+		// Build final response
+		response.put("status", "Success");
+		response.put("message", "Attendance records retrieved successfully");
+		response.put("attendance", attendanceDTOList);
+		response.put("summary", summary);
+
+	} catch (Exception e) {
+		response.put("status", "Error");
+		response.put("message", "An error occurred while retrieving attendance: " + e.getMessage());
 	}
+
+	return response;
+}
 
 }

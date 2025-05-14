@@ -14,17 +14,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
 
 @Entity
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class UploadMaterials {
 	
 	@Id
@@ -57,4 +49,93 @@ public class UploadMaterials {
 
     private boolean submissionAllowed; // Only for assignments
 
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public int getUploadType() {
+		return uploadType;
+	}
+
+	public void setUploadType(int uploadType) {
+		this.uploadType = uploadType;
+	}
+
+	public UserCredentials getStaff() {
+		return staff;
+	}
+
+	public void setStaff(UserCredentials staff) {
+		this.staff = staff;
+	}
+
+	public SubjectDetails getSubject() {
+		return subject;
+	}
+
+	public void setSubject(SubjectDetails subject) {
+		this.subject = subject;
+	}
+
+	public BatchDetails getBatch() {
+		return batch;
+	}
+
+	public void setBatch(BatchDetails batch) {
+		this.batch = batch;
+	}
+
+	public String getFilePath() {
+		return filePath;
+	}
+
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
+	}
+
+	public LocalDateTime getUploadedAt() {
+		return uploadedAt;
+	}
+
+	public void setUploadedAt(LocalDateTime uploadedAt) {
+		this.uploadedAt = uploadedAt;
+	}
+
+	public LocalDate getDueDate() {
+		return dueDate;
+	}
+
+	public void setDueDate(LocalDate dueDate) {
+		this.dueDate = dueDate;
+	}
+
+	public boolean isSubmissionAllowed() {
+		return submissionAllowed;
+	}
+
+	public void setSubmissionAllowed(boolean submissionAllowed) {
+		this.submissionAllowed = submissionAllowed;
+	}
+
+    
 }
