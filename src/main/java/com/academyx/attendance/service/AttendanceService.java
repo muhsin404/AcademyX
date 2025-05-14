@@ -30,144 +30,160 @@ import com.academyx.user.repository.UserCredentialsRepository;
 @Service
 public class AttendanceService {
 
-    @Autowired
-    private AttendanceRecordRepository attendanceRecordRepository;
+	@Autowired
+	private AttendanceRecordRepository attendanceRecordRepository;
 
-    @Autowired
-    private AttendanceSessionRepository attendanceSessionRepository;
+	@Autowired
+	private AttendanceSessionRepository attendanceSessionRepository;
 
-    @Autowired
-    private BatchDetailsRepository batchRepository;
+	@Autowired
+	private BatchDetailsRepository batchRepository;
 
-    @Autowired
-    private TimetableEntryRepository timetableRepository;
-    
-    @Autowired
-    private UserCredentialsRepository userCredentialsRepository;
+	@Autowired
+	private TimetableEntryRepository timetableRepository;
 
-    @Autowired
-    private Utils utils;
+	@Autowired
+	private UserCredentialsRepository userCredentialsRepository;
 
-    public Map<String, Object> markAttendance(AttendanceRequestDTO attendanceRequest, UserCredentials user) {
-        Map<String, Object> response = new HashMap<>();
+	@Autowired
+	private Utils utils;
 
-        try {
-            // Validate batch and timetable
-            Optional<BatchDetails> batchOpt = batchRepository.findById(attendanceRequest.getBatchId());
-            if (batchOpt.isEmpty()) {
-                return utils.createErrorResponse("Invalid batch ID");
-            }
+	public Map<String, Object> markAttendance(AttendanceRequestDTO attendanceRequest, UserCredentials user) {
+		Map<String, Object> response = new HashMap<>();
 
-            Optional<TimetableEntry> timetableOpt = timetableRepository.findById(attendanceRequest.getTimetableEntryId());
-            if (timetableOpt.isEmpty()) {
-                return utils.createErrorResponse("Invalid timetable ID");
-            }
+		try {
+			// Validate batch and timetable
+			Optional<BatchDetails> batchOpt = batchRepository.findById(attendanceRequest.getBatchId());
+			if (batchOpt.isEmpty()) {
+				return utils.createErrorResponse("Invalid batch ID");
+			}
 
-            // Check if session already exists
-            boolean sessionExists = attendanceSessionRepository.existsSessionByDateAndTimetableAndBatch(
-                    attendanceRequest.getSessionDate(),
-                    attendanceRequest.getTimetableEntryId(),
-                    attendanceRequest.getBatchId()
-            );
-            if (sessionExists) {
-                return utils.createErrorResponse("Attendance already marked for the session");
-            }
+			Optional<TimetableEntry> timetableOpt = timetableRepository
+					.findById(attendanceRequest.getTimetableEntryId());
+			if (timetableOpt.isEmpty()) {
+				return utils.createErrorResponse("Invalid timetable ID");
+			}
 
-            // Save attendance session
-            AttendanceSession session = new AttendanceSession();
-            session.setSessionDate(attendanceRequest.getSessionDate());
-            session.setBatch(batchOpt.get());
-            session.setTimetableEntry(timetableOpt.get());
-            session.setMarkedBy(user);
-            session.setMarkedAt(LocalDateTime.now());
-            attendanceSessionRepository.save(session);
+			// Check if session already exists
+			boolean sessionExists = attendanceSessionRepository.existsSessionByDateAndTimetableAndBatch(
+					attendanceRequest.getSessionDate(), attendanceRequest.getTimetableEntryId(),
+					attendanceRequest.getBatchId());
+			if (sessionExists) {
+				return utils.createErrorResponse("Attendance already marked for the session");
+			}
 
-            // Save student attendance records
-            List<AttendanceRecord> attendanceList = new ArrayList<>();
-            List<String> failedStudents = new ArrayList<>();
-            
-            for (StudentsDTO dto : attendanceRequest.getStudentsList()) {
-            	
-            	UserCredentials student=userCredentialsRepository.getActiveUserById(dto.getStudentId());
-            	if(student==null)
-            	{
-            		failedStudents.add("Student ID not found: " + dto.getStudentId());
-                    continue; // Skip this student
-            	}
-                AttendanceRecord attendance = new AttendanceRecord();
-                attendance.setSession(session);
-                attendance.setStudent(student);
-                attendance.setStatus(dto.getStatus());
-                attendanceList.add(attendance);
-            }
+			// Save attendance session
+			AttendanceSession session = new AttendanceSession();
+			session.setSessionDate(attendanceRequest.getSessionDate());
+			session.setBatch(batchOpt.get());
+			session.setTimetableEntry(timetableOpt.get());
+			session.setMarkedBy(user);
+			session.setMarkedAt(LocalDateTime.now());
+			attendanceSessionRepository.save(session);
 
-            if (!attendanceList.isEmpty()) {
-                attendanceRecordRepository.saveAll(attendanceList);
-            }
+			// Save student attendance records
+			List<AttendanceRecord> attendanceList = new ArrayList<>();
+			List<String> failedStudents = new ArrayList<>();
 
-            if (!failedStudents.isEmpty()) {
-                response.put("status", "Partial Success");
-                response.put("message", "Attendance marked with some errors.");
-                response.put("errors", failedStudents);
-            } else {
-                response = utils.createSuccessResponse("Attendance marked successfully");
-            }
+			for (StudentsDTO dto : attendanceRequest.getStudentsList()) {
 
-            return response;
+				UserCredentials student = userCredentialsRepository.getActiveUserById(dto.getStudentId());
+				if (student == null) {
+					failedStudents.add("Student ID not found: " + dto.getStudentId());
+					continue; // Skip this student
+				}
+				AttendanceRecord attendance = new AttendanceRecord();
+				attendance.setSession(session);
+				attendance.setStudent(student);
+				attendance.setStatus(dto.getStatus());
+				attendanceList.add(attendance);
+			}
 
-        } catch (Exception e) {
-            return utils.createErrorResponse("Error while marking attendance: " + e.getMessage());
-        }
-    }
-    
-    
-    public Map<String, Object> getStudentAttendanceByDate(Long studentId, LocalDate sessionDate) {
-        Map<String, Object> response = new HashMap<>();
-        
-        // Validate student ID
-        if (studentId == null || studentId <= 0) {
-            response.put("status", "Error");
-            response.put("message", "Invalid student ID");
-            return response;
-        }
+			if (!attendanceList.isEmpty()) {
+				attendanceRecordRepository.saveAll(attendanceList);
+			}
 
-        try {
-            // Retrieve attendance records from the database
-            List<AttendanceRecord> records = attendanceRecordRepository.findByStudentAndDate(studentId, sessionDate);
+			if (!failedStudents.isEmpty()) {
+				response.put("status", "Partial Success");
+				response.put("message", "Attendance marked with some errors.");
+				response.put("errors", failedStudents);
+			} else {
+				response = utils.createSuccessResponse("Attendance marked successfully");
+			}
 
-            // Check if attendance records are found for the student on the given date
-            if (records.isEmpty()) {
-                response.put("status", "Error");
-                response.put("message", "No attendance records found for the given student on " + sessionDate);
-                return response;
-            }
+			return response;
 
-            // Map attendance records to DTOs
-            List<StudentAttendanceDTO> attendanceDTOList = records.stream().map(record -> {
-                var session = record.getSession();
-                var entry = session.getTimetableEntry();
-                return new StudentAttendanceDTO(
-                        session.getSessionId(),
-                        session.getSessionDate(),
-                        record.getStatus(),
-                        entry.getSubject().getSubjectName(),  
-                        entry.getPeriods().getStartTime(),
-                        entry.getPeriods().getEndTime(),
-                        entry.getPeriod().getPeriodNumber()
-                );
-            }).collect(Collectors.toList());
+		} catch (Exception e) {
+			return utils.createErrorResponse("Error while marking attendance: " + e.getMessage());
+		}
+	}
+	
+	
+	//method to get the attendance of a student based on filters - of a subject using subjectId (of a date / in between date range)
+	// without subject whole attendance of a date or in between date range
 
-            // Add DTO list to response for a proper response
-            response.put("status", "Success");
-            response.put("message", "Attendance records retrieved successfully");
-            response.put("attendance", attendanceDTOList);
+	public Map<String, Object> getStudentAttendanceByDate(Long studentId, LocalDate sessionDate, LocalDate startDate,
+			LocalDate endDate, Long subjectId) {
+		Map<String, Object> response = new HashMap<>();
 
-        } catch (Exception e) {
-            // Handle any unexpected exceptions
-            response.put("status", "Error");
-            response.put("message", "An error occurred while retrieving attendance: " + e.getMessage());
-        }
+		if (studentId == null || studentId <= 0) {
+			response.put("status", "Error");
+			response.put("message", "Invalid student ID");
+			return response;
+		}
 
-        return response;
-    }
+		List<AttendanceRecord> records = new ArrayList<>();
+
+		try {
+			if (startDate != null && endDate != null) {
+				if (endDate.isBefore(startDate)) {
+					response.put("status", "Error");
+					response.put("message", "Invalid date range");
+					return response;
+				}
+
+				if (subjectId != null) {
+					records = attendanceRecordRepository.findByStudentAndDateRangeAndSubject(studentId, startDate,
+							endDate, subjectId);
+				} else {
+					records = attendanceRecordRepository.findByStudentAndDateBetween(studentId, startDate, endDate);
+				}
+			} else {
+				if (sessionDate == null)
+					sessionDate = LocalDate.now();
+
+				if (subjectId != null) {
+					records = attendanceRecordRepository.findByStudentAndDateAndSubject(studentId, sessionDate,
+							subjectId);
+				} else {
+					records = attendanceRecordRepository.findByStudentAndDate(studentId, sessionDate);
+				}
+			}
+
+			if (records.isEmpty()) {
+				response.put("status", "Error");
+				response.put("message", "No attendance records found for the given criteria.");
+				return response;
+			}
+
+			List<StudentAttendanceDTO> attendanceDTOList = records.stream().map(record -> {
+				var session = record.getSession();
+				var entry = session.getTimetableEntry();
+				return new StudentAttendanceDTO(session.getSessionId(), session.getSessionDate(), record.getStatus(),
+						entry.getSubject().getSubjectName(), entry.getPeriods().getStartTime(),
+						entry.getPeriods().getEndTime(), entry.getPeriod().getPeriodNumber());
+			}).collect(Collectors.toList());
+
+			response.put("status", "Success");
+			response.put("message", "Attendance records retrieved successfully");
+			response.put("attendance", attendanceDTOList);
+
+		} catch (Exception e) {
+			response.put("status", "Error");
+			response.put("message", "An error occurred while retrieving attendance: " + e.getMessage());
+		}
+
+		return response;
+	}
+
 }

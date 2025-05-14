@@ -64,7 +64,10 @@ public class AttendanceController {
 
 	@GetMapping("/getAttendance")
 	public ResponseEntity<Map<String, Object>> getAttendance(@RequestHeader("userToken") String userToken ,@RequestParam("studentId") Long studentId,
-							@RequestParam(value="sessionDate",required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate sessionDate) {
+							@RequestParam(value="sessionDate",required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate sessionDate,
+							@RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+					        @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+					        @RequestParam(value = "subjectId", required = false) Long subjectId) {
 		
 		Map<String, Object> response = new HashMap<>();
 
@@ -73,14 +76,15 @@ public class AttendanceController {
 	        response = utils.createErrorResponse("User not verified");
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 	    }
-	    UserCredentials user = (UserCredentials) verifiedUser.get("user");
-	    
-	    if (sessionDate == null) {
-	        sessionDate = LocalDate.now(); // default to today if no date is provided in request 
-	    }
+//	    UserCredentials user = (UserCredentials) verifiedUser.get("user");
 	    
 	    try {
-	        response=attendanceService.getStudentAttendanceByDate(studentId,sessionDate);
+	    	
+	    	if (sessionDate == null && (startDate == null || endDate == null)) {
+	            sessionDate = LocalDate.now(); // fallback to today if no date given in the request
+	        }
+	    	
+	        response=attendanceService.getStudentAttendanceByDate(studentId,sessionDate,startDate,endDate,subjectId);
 	        if (response.get("status").toString().equals("Error")) {
 				return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
 
