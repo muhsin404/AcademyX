@@ -26,7 +26,7 @@ public class AttendanceRecord {
     private UserCredentials student;
 
    
-    private String status;
+    private String status;  //present / absent / leave
 
     // Getters and setters
 

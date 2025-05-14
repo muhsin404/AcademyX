@@ -26,7 +26,7 @@ public class UserCredentials {
 	private String password;
 	
 	@Column
-	private int role;
+	private int role;  //1-ADMIN, 2-SUB-ADMIN, 3-HOD, 4- STAFF, 5-STUDENT 
 	
 	@Column
 	private String userToken;

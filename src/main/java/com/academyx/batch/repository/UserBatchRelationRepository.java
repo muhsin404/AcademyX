@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.academyx.batch.dto.AssignedUserDTO;
+import com.academyx.batch.dto.UserDTO;
 import com.academyx.batch.model.UserBatchRelation;
+import com.academyx.user.model.UserCredentials;
 
 public interface UserBatchRelationRepository extends JpaRepository<UserBatchRelation, Long>{
 
@@ -55,4 +57,13 @@ public interface UserBatchRelationRepository extends JpaRepository<UserBatchRela
     @Query("SELECT CASE WHEN COUNT(ub) > 0 THEN true ELSE false END FROM UserBatchRelation ub WHERE ub.userCredentials.userId = :userId AND ub.batchDetails.batchId = :batchId")
     boolean existsByUserIdAndBatchId(@Param("userId") Long userId, @Param("batchId") Long batchId);
     
+    @Query("SELECT new com.academyx.batch.dto.UserDTO(ub.userCredentials.userId, ub.userCredentials.userPersonalDetails.fullName) " +
+    	       "FROM UserBatchRelation ub " +
+    	       "WHERE ub.batchDetails.batchId = :batchId AND ub.userCredentials.role = 4")
+    List<UserDTO> findStaffByBatchId(@Param("batchId") Long batchId);
+    
+    @Query("SELECT new com.academyx.batch.dto.UserDTO(ub.userCredentials.userId, ub.userCredentials.userPersonalDetails.fullName) " +
+    	       "FROM UserBatchRelation ub " +
+    	       "WHERE ub.batchDetails.batchId = :batchId AND ub.userCredentials.role = 5")
+    List<UserDTO> findStudentsByBatchId(@Param("batchId") Long batchId);
 }

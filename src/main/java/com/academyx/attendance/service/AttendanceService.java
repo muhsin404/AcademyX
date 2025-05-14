@@ -1,16 +1,19 @@
 package com.academyx.attendance.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.academyx.attendance.dto.AttendanceRequestDTO;
+import com.academyx.attendance.dto.StudentAttendanceDTO;
 import com.academyx.attendance.dto.StudentsDTO;
 import com.academyx.attendance.model.AttendanceRecord;
 import com.academyx.attendance.model.AttendanceSession;
@@ -115,5 +118,56 @@ public class AttendanceService {
         } catch (Exception e) {
             return utils.createErrorResponse("Error while marking attendance: " + e.getMessage());
         }
+    }
+    
+    
+    public Map<String, Object> getStudentAttendanceByDate(Long studentId, LocalDate sessionDate) {
+        Map<String, Object> response = new HashMap<>();
+        
+        // Validate student ID
+        if (studentId == null || studentId <= 0) {
+            response.put("status", "Error");
+            response.put("message", "Invalid student ID");
+            return response;
+        }
+
+        try {
+            // Retrieve attendance records from the database
+            List<AttendanceRecord> records = attendanceRecordRepository.findByStudentAndDate(studentId, sessionDate);
+
+            // Check if attendance records are found for the student on the given date
+            if (records.isEmpty()) {
+                response.put("status", "Error");
+                response.put("message", "No attendance records found for the given student on " + sessionDate);
+                return response;
+            }
+
+            // Map attendance records to DTOs
+            List<StudentAttendanceDTO> attendanceDTOList = records.stream().map(record -> {
+                var session = record.getSession();
+                var entry = session.getTimetableEntry();
+                return new StudentAttendanceDTO(
+                        session.getSessionId(),
+                        session.getSessionDate(),
+                        record.getStatus(),
+                        entry.getSubject().getSubjectName(),  
+                        entry.getPeriods().getStartTime(),
+                        entry.getPeriods().getEndTime(),
+                        entry.getPeriod().getPeriodNumber()
+                );
+            }).collect(Collectors.toList());
+
+            // Add DTO list to response for a proper response
+            response.put("status", "Success");
+            response.put("message", "Attendance records retrieved successfully");
+            response.put("attendance", attendanceDTOList);
+
+        } catch (Exception e) {
+            // Handle any unexpected exceptions
+            response.put("status", "Error");
+            response.put("message", "An error occurred while retrieving attendance: " + e.getMessage());
+        }
+
+        return response;
     }
 }

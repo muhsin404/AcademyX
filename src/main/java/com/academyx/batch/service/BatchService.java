@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.academyx.batch.dto.AssignedUserDTO;
 import com.academyx.batch.dto.BatchDTO;
+import com.academyx.batch.dto.UserDTO;
 import com.academyx.batch.model.BatchDetails;
 import com.academyx.batch.model.UserBatchRelation;
 import com.academyx.batch.repository.BatchDetailsRepository;
@@ -235,5 +236,55 @@ public class BatchService {
 	        return response;
 	    }
 	}
+
+
+	public Map<String, Object> getUsersOfABatch(Long batchId) {
+	    Map<String, Object> response = new HashMap<>();
+
+	    try {
+	        BatchDetails batch = batchDetailsRepository.getBatchById(batchId);
+
+	        if (batch == null) {
+	            return utils.createErrorResponse("Batch not found");
+	        }
+
+	        List<UserDTO> students = userBatchRelationRepository.findStudentsByBatchId(batchId);
+	        List<UserDTO> staffs = userBatchRelationRepository.findStaffByBatchId(batchId);
+
+	        boolean hasStudents = students != null && !students.isEmpty();
+	        boolean hasStaffs = staffs != null && !staffs.isEmpty();
+
+	        if (!hasStudents && !hasStaffs) {
+	            return utils.createErrorResponse("No users assigned to this batch");
+	        }
+
+	        response.put("status", "Partial Success");
+
+	        if (hasStudents) {
+	            response.put("students", students);
+	        } else {
+	            response.put("studentMessage", "No students assigned to this batch");
+	        }
+
+	        if (hasStaffs) {
+	            response.put("staffs", staffs);
+	        } else {
+	            response.put("staffMessage", "No staffs assigned to this batch");
+	        }
+
+	        // If both groups are present, mark as full success
+	        if (hasStudents && hasStaffs) {
+	            response.put("status", "Success");
+	        }
+
+	        return response;
+
+	    } catch (Exception e) {
+	        response.put("status", "Error");
+	        response.put("message", e.getMessage());
+	        return response;
+	    }
+	}
+
 	
 }

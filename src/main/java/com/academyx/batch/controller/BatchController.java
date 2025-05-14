@@ -114,6 +114,31 @@ public class BatchController {
 		}
 	}
 	
+	@GetMapping("/getUsersOfABatch")
+	public ResponseEntity<Map<String, Object>> getUsersOfABatch(@RequestHeader("userToken") String userToken,
+																@RequestParam("batchId") Long batchId) {
+		
+		Map<String, Object> response=new HashMap<>();
+		// Validate user
+	    Map<String, Object> verifiedUser = utils.validateUser(userToken);
+	    if (verifiedUser == null || verifiedUser.get("status").equals("Error")) {
+	        response = utils.createErrorResponse("User not verified");
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    }
+		
+	 // Validate input
+	    if (batchId == null) {
+	        response = utils.createErrorResponse("Missing batchId");
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+	    }
+	    response = batchService.getUsersOfABatch(batchId);
+	    if (response.get("status").equals("Error")) {
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    }
+
+	    return ResponseEntity.ok(response);
+	}
+	
 	
 	@PutMapping("/deleteBatch")
 	public ResponseEntity<Map<String, Object>> deleteBatch(

@@ -1,6 +1,5 @@
 package com.academyx.timetable.model;
 
-import java.time.LocalTime;
 
 import com.academyx.batch.model.BatchDetails;
 import com.academyx.subject.model.SubjectDetails;
@@ -10,7 +9,7 @@ import jakarta.persistence.*;
 
 @Entity
 public class TimetableEntry {
-    @Id
+	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long timetableEntryId;
 
@@ -21,11 +20,9 @@ public class TimetableEntry {
     @Column(nullable = false)
     private String dayOfWeek;
 
-    @Column(nullable = false)
-    private LocalTime startTime;
-
-    @Column(nullable = false)
-    private LocalTime endTime;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="periodId", referencedColumnName="periodId")
+    private Periods period;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="subjectId", referencedColumnName="subjectId")
@@ -37,6 +34,10 @@ public class TimetableEntry {
 
     @Column(nullable = false)
     private int status;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="createdBy", referencedColumnName="userId")
+    private UserCredentials createdBy;
 
 	public Long getTimetableEntryId() {
 		return timetableEntryId;
@@ -48,6 +49,22 @@ public class TimetableEntry {
 
 	public BatchDetails getBatch() {
 		return batch;
+	}
+
+	public Periods getPeriod() {
+		return period;
+	}
+
+	public void setPeriod(Periods period) {
+		this.period = period;
+	}
+
+	public UserCredentials getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(UserCredentials createdBy) {
+		this.createdBy = createdBy;
 	}
 
 	public void setBatch(BatchDetails batch) {
@@ -62,20 +79,12 @@ public class TimetableEntry {
 		this.dayOfWeek = dayOfWeek;
 	}
 
-	public LocalTime getStartTime() {
-		return startTime;
+	public Periods getPeriods() {
+		return period;
 	}
 
-	public void setStartTime(LocalTime startTime) {
-		this.startTime = startTime;
-	}
-
-	public LocalTime getEndTime() {
-		return endTime;
-	}
-
-	public void setEndTime(LocalTime endTime) {
-		this.endTime = endTime;
+	public void setPeriods(Periods period) {
+		this.period = period;
 	}
 
 	public SubjectDetails getSubject() {
@@ -101,6 +110,8 @@ public class TimetableEntry {
 	public void setStatus(int status) {
 		this.status = status;
 	}
-
+    
     // getters and setters…
+    
+    
 }
