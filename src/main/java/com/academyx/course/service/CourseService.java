@@ -30,44 +30,72 @@ public class CourseService {
 	@Autowired
 	private CourseDetailsRepository courseDetailsRepository;
 
-	public Map<String, Object> createCourseDetails(UserCredentials user,HashMap<String, Object> data) {
-		Map<String, Object> response = new HashMap<>();
-		
-		
-		try {
-			
-			Long orgId = Long.parseLong(data.get("organizationId").toString());
-			Organizations organization = organizationRepository.getOrganizationByOrganizationId(orgId);
-			if (organization == null) {
-				return utils.createErrorResponse("Invalid organization ID");
-			}
-		String courseName=data.get("courseName").toString().trim();
-		
-		boolean isCourseExist = courseDetailsRepository.findCourseExistOrNot(courseName);
-		if(isCourseExist)
-		{
-			return utils.createErrorResponse("course already exist");
-		}
-		else
-		{
-			CourseDetails course=new CourseDetails();
-			course.setCourseName(courseName);
-			course.setCourseDescription(data.get("courseDescription").toString());
-			course.setDuration(data.get("courseDuration").toString());
-			course.setCreatedBy(user);
-			course.setStatus(1);//active status(1)
-			course.setOrganization(organization);
-			courseDetailsRepository.save(course);
-			
-			return utils.createSuccessResponse("successfully created course");
-			
-		}
-		}catch (Exception e) {
-			response.put("status", "Error" + e);
-			return response;
-		}
-		
+	public Map<String, Object> createOrUpdateCourseDetails(UserCredentials user, HashMap<String, Object> data) {
+	    Map<String, Object> response = new HashMap<>();
+
+	    try {
+	        Long orgId = Long.parseLong(data.get("organizationId").toString());
+	        Organizations organization = organizationRepository.getOrganizationByOrganizationId(orgId);
+	        if (organization == null) {
+	            return utils.createErrorResponse("Invalid organization ID");
+	        }
+
+	        String courseName = data.get("courseName").toString().trim();
+
+	        if (data.containsKey("courseId") && data.get("courseId") != null && !data.get("courseId").toString().isEmpty()) {
+	            // --- UPDATE FLOW ---
+	            Long courseId = Long.parseLong(data.get("courseId").toString()); // <-- new
+	            CourseDetails optionalCourse = courseDetailsRepository.getCourseById(courseId); // <-- new
+	            if (optionalCourse==null) {
+	                return utils.createErrorResponse("Course not found with the given ID"); // <-- new
+	            }
+
+	            CourseDetails course = optionalCourse;
+
+	            // Optional: Check if the course name is changing, and if it's a duplicate
+	            if (!course.getCourseName().equalsIgnoreCase(courseName)) {
+	                boolean isCourseExist = courseDetailsRepository.findCourseExistOrNot(courseName);
+	                if (isCourseExist) {
+	                    return utils.createErrorResponse("Course name already exists");
+	                }
+	            }
+
+	            // Update other fields
+	            course.setCourseName(courseName); 
+	            course.setCourseDescription(data.get("courseDescription").toString());
+	            course.setDuration(data.get("courseDuration").toString());
+	            course.setOrganization(organization); // In case org is changed
+	            course.setUpdatedBy(user); // Optional if you track update info
+
+	            courseDetailsRepository.save(course); // <-- updated
+	            return utils.createSuccessResponse("Course successfully updated"); // <-- updated message
+
+	        } else {
+	            // --- CREATE FLOW ---
+	            boolean isCourseExist = courseDetailsRepository.findCourseExistOrNot(courseName);
+	            if (isCourseExist) {
+	                return utils.createErrorResponse("Course already exists");
+	            }
+
+	            CourseDetails course = new CourseDetails();
+	            course.setCourseName(courseName);
+	            course.setCourseDescription(data.get("courseDescription").toString());
+	            course.setDuration(data.get("courseDuration").toString());
+	            course.setCreatedBy(user);
+	            course.setStatus(1); // active
+	            course.setOrganization(organization);
+
+	            courseDetailsRepository.save(course);
+	            return utils.createSuccessResponse("Course successfully created");
+	        }
+
+	    } catch (Exception e) {
+	        response.put("status", "Error");
+	        response.put("message", e.getMessage());
+	        return response;
+	    }
 	}
+
 	
 	public Map<String, Object> getAllCourses() {
 	    Map<String, Object> response = new HashMap<>();

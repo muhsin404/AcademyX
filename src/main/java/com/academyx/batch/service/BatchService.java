@@ -46,54 +46,80 @@ public class BatchService {
 	@Autowired
 	private OrganizationRepository organizationRepository;
 
-	public Map<String, Object> createBatchDetails(UserCredentials user, HashMap<String, Object> data) {
-		Map<String, Object> response = new HashMap<>();
-		
-		System.out.println(data);
-		try {
-			
-			Long orgId = Long.parseLong(data.get("organizationId").toString());
-			Organizations organization = organizationRepository.getOrganizationByOrganizationId(orgId);
-			if (organization == null) {
-				return utils.createErrorResponse("Invalid organization ID");
-			}
-			
-		String batchName=data.get("batchName").toString().trim();
-		
-		boolean isBatchExist = batchDetailsRepository.findBatchExistOrNot(batchName);
-		if(isBatchExist)
-		{
-			return utils.createErrorResponse("batch already exist");
-		}
-		else
-		{
-			BatchDetails batch=new BatchDetails();
-			batch.setBatchName(batchName);
-			batch.setBatchDescription(data.get("batchDescription").toString());
-			
-			String startDateStr = data.get("batchStartingDate").toString();
-			String endDateStr = data.get("batchEndingDate").toString();
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-			
-			LocalDate batchStartingDate = LocalDate.parse(startDateStr, formatter);
-			LocalDate batchEndingDate = LocalDate.parse(endDateStr, formatter);
-			
-			batch.setStartingDate(batchStartingDate);
-			batch.setEndingDate(batchEndingDate);
-			batch.setStatus(1);//active status
-			batch.setCreatedBy(user);
-			batch.setOrganization(organization);
-			batchDetailsRepository.save(batch);
-			
-			return utils.createSuccessResponse("successfully created batch");
-			
-		}
-		}catch (Exception e) {
-			response.put("status", "Error" + e);
-			return response;
-		}
-		
+	// ✅ [MODIFIED] Method name changed
+	public Map<String, Object> createOrUpdateBatchDetails(UserCredentials user, HashMap<String, Object> data) {
+	    Map<String, Object> response = new HashMap<>();
+
+	    try {
+	        Long orgId = Long.parseLong(data.get("organizationId").toString());
+	        Organizations organization = organizationRepository.getOrganizationByOrganizationId(orgId);
+	        if (organization == null) {
+	            return utils.createErrorResponse("Invalid organization ID");
+	        }
+
+	        String batchName = data.get("batchName").toString().trim();
+	        String batchDescription = data.get("batchDescription") != null ? data.get("batchDescription").toString() : "";
+
+	        String startDateStr = data.get("batchStartingDate").toString();
+	        String endDateStr = data.get("batchEndingDate").toString();
+	        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+	        LocalDate batchStartingDate = LocalDate.parse(startDateStr, formatter);
+	        LocalDate batchEndingDate = LocalDate.parse(endDateStr, formatter);
+
+	        // ✅ [NEW] Check if batchId is present → Update flow
+	        if (data.containsKey("batchId") && data.get("batchId") != null && !data.get("batchId").toString().isEmpty()) {
+	            Long batchId = Long.parseLong(data.get("batchId").toString());
+	            BatchDetails optionalBatch = batchDetailsRepository.getBatchById(batchId);
+
+	            if (optionalBatch==null) {
+	                return utils.createErrorResponse("Batch with given ID not found");
+	            }
+
+	            BatchDetails existingBatch = optionalBatch;
+
+	            // ✅ Optional: Check for name duplication with other batches (excluding current)
+	            boolean isNameUsed = batchDetailsRepository.findBatchExistOrNot(batchName);
+	            if (isNameUsed) {
+	                return utils.createErrorResponse("Another batch with the same name already exists");
+	            }
+
+	            existingBatch.setBatchName(batchName);
+	            existingBatch.setBatchDescription(batchDescription);
+	            existingBatch.setStartingDate(batchStartingDate);
+	            existingBatch.setEndingDate(batchEndingDate);
+	            existingBatch.setOrganization(organization);
+	            existingBatch.setUpdatedBy(user); // optionally add an updatedBy field if available
+
+	            batchDetailsRepository.save(existingBatch);
+	            return utils.createSuccessResponse("Successfully updated batch");
+	        } 
+	        // ✅ [MODIFIED] Create flow
+	        else {
+	            boolean isBatchExist = batchDetailsRepository.findBatchExistOrNot(batchName);
+	            if (isBatchExist) {
+	                return utils.createErrorResponse("Batch already exists");
+	            }
+
+	            BatchDetails batch = new BatchDetails();
+	            batch.setBatchName(batchName);
+	            batch.setBatchDescription(batchDescription);
+	            batch.setStartingDate(batchStartingDate);
+	            batch.setEndingDate(batchEndingDate);
+	            batch.setStatus(1);
+	            batch.setCreatedBy(user);
+	            batch.setOrganization(organization);
+	            batchDetailsRepository.save(batch);
+
+	            return utils.createSuccessResponse("Successfully created batch");
+	        }
+
+	    } catch (Exception e) {
+	        response.put("status", "Error");
+	        response.put("message", e.getMessage());
+	        return response;
+	    }
 	}
+
 	
 	
 	public Map<String, Object> getBatches(Long batchId) {

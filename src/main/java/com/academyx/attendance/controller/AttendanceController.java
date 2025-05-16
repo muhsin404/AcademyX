@@ -46,7 +46,11 @@ public class AttendanceController {
 	    }
 
 	    UserCredentials user = (UserCredentials) verifiedUser.get("user");
-
+	    int role = user.getRole(); // getting the role from userToken and authorizing 
+	    if (role == 5) {
+	        response = utils.createErrorResponse("Unauthorized: You are not allowed to perform this action");
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+	    }
 	    try {
 	        response=attendanceService.markAttendance(attendanceRequest, user);
 	        if (response.get("status").toString().equals("Error")) {
@@ -84,7 +88,7 @@ public class AttendanceController {
 	            sessionDate = LocalDate.now(); // fallback to today if no date given in the request
 	        }
 	    	
-	        response=attendanceService.getStudentAttendanceByDate(studentId,sessionDate,startDate,endDate,subjectId);
+	        response=attendanceService.getStudentAttendance(studentId,sessionDate,startDate,endDate,subjectId);
 	        if (response.get("status").toString().equals("Error")) {
 				return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
 
@@ -92,7 +96,7 @@ public class AttendanceController {
 				return ResponseEntity.ok(response);
 			}
 	    } catch (Exception e) {
-	        response = utils.createErrorResponse("Error while marking attendance: " + e.getMessage());
+	        response = utils.createErrorResponse("Error while getting attendance: " + e.getMessage());
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 	    }
 	

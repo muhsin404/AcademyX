@@ -28,8 +28,6 @@ public class UserOrganizationRelation {
 	@JoinColumn(name = "organizationId", referencedColumnName = "organizationId")
 	private Organizations organization;
 
-	@Column
-	private int role; // 1- org Admin 2- orgSubAdmin
 
 	public Long getRelationId() {
 		return relationId;
@@ -55,12 +53,5 @@ public class UserOrganizationRelation {
 		this.organization = organizations;
 	}
 
-	public int getRole() {
-		return role;
-	}
-
-	public void setRole(int role) {
-		this.role = role;
-	}
 
 }

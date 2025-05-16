@@ -28,40 +28,47 @@ public class CourseController {
 	@Autowired
 	private CourseService courseService;
 
-	@PostMapping("/createCourse")
-	public ResponseEntity<Map<String, Object>> createCourse(@RequestHeader("userToken") String userToken, @RequestBody HashMap<String,Object> data) {
-		Map<String, Object> response = new HashMap<>();
-		
-		Map<String,Object> verifiedUser = utils.validateUser(userToken);
-		if(verifiedUser==null || verifiedUser.get("status").equals("Error"))
-		{
-			response= utils.createErrorResponse("User not verified");
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-		}
-		
-		UserCredentials user =(UserCredentials) verifiedUser.get("user");
-		
-		if(data.get("organizationId").toString()==null || data.get("organizationId").toString().isEmpty())
-		{
-			response=utils.createErrorResponse("Missing organizationId");
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-		}
-       if (data.get("courseName") == null || data.get("courseName").toString().isEmpty()||
-    		   data.get("courseDuration")==null || data.get("courseDuration").toString().isEmpty()) {
+	@PostMapping("/createOrUpdateCourse") // <-- modified (renamed for clarity)
+	public ResponseEntity<Map<String, Object>> createOrUpdateCourse(@RequestHeader("userToken") String userToken, @RequestBody HashMap<String, Object> data) {
+	    Map<String, Object> response = new HashMap<>();
 
-			response= utils.createErrorResponse("course name is required");
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-		} else {
-			response = courseService.createCourseDetails(user,data);
-			if (response.get("status").toString().equals("Error")) {
-				return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    Map<String, Object> verifiedUser = utils.validateUser(userToken);
+	    if (verifiedUser == null || verifiedUser.get("status").equals("Error")) {
+	        response = utils.createErrorResponse("User not verified");
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    }
 
-			} else {
-				return ResponseEntity.ok(response);
-			}
-		}
-		
+	    UserCredentials user = (UserCredentials) verifiedUser.get("user");
+
+	    // Authorization check based on user role
+	    int userRole = user.getRole(); // <-- new
+	    if (userRole != 1 && userRole != 2) { // <-- new
+	        response = utils.createErrorResponse("Unauthorized to perform this action"); // <-- new
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response); // <-- new
+	    }
+
+	    if (data.get("organizationId") == null || data.get("organizationId").toString().isEmpty()) {
+	        response = utils.createErrorResponse("Missing organizationId");
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    }
+
+	    if (data.get("courseName") == null || data.get("courseName").toString().isEmpty() ||
+	        data.get("courseDuration") == null || data.get("courseDuration").toString().isEmpty()) {
+
+	        response = utils.createErrorResponse("course name is required");
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    }
+
+	    // Unified service method for create/update
+	    response = courseService.createOrUpdateCourseDetails(user, data); // <-- modified method name
+
+	    if (response.get("status").toString().equals("Error")) {
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    } else {
+	        return ResponseEntity.ok(response);
+	    }
 	}
+
 	
 	@GetMapping("/getCourses")
 	public ResponseEntity<Map<String, Object>> getCourses(@RequestHeader("userToken") String userToken) {
@@ -95,6 +102,12 @@ public class CourseController {
 	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
 	    }
 	    
+	    UserCredentials user = (UserCredentials) verifiedUser.get("user");
+	    int role = user.getRole(); // getting the role from userToken and authorizing 
+	    if (role != 1 && role != 2) {
+	        response = utils.createErrorResponse("Unauthorized: You are not allowed to perform this action");
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+	    }
 
 	    // Validate input
 	    if (data.get("courseId").toString() == null) {

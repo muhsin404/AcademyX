@@ -28,41 +28,50 @@ public class BatchController {
 	private BatchService batchService;
 
 	@PostMapping("/createBatch")
-	public ResponseEntity<Map<String, Object>> createBatch(@RequestHeader("userToken") String userToken, @RequestBody HashMap<String,Object> data) {
-		Map<String, Object> response = new HashMap<>();
-		
-		Map<String,Object> verifiedUser = utils.validateUser(userToken);
-		if(verifiedUser==null || verifiedUser.get("status").equals("Error"))
-		{
-			response= utils.createErrorResponse("User not verified");
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-		}
-		
-		UserCredentials user =(UserCredentials) verifiedUser.get("user");
-		
-		if(data.get("organizationId").toString()==null || data.get("organizationId").toString().isEmpty())
-		{
-			response=utils.createErrorResponse("Missing organizationId");
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-		}
-		
-       if (data.get("batchName") == null || data.get("batchName").toString().isEmpty()||
-    		   data.get("batchStartingDate")==null || data.get("batchStartingDate").toString().isEmpty()||
-    		   data.get("batchEndingDate")==null || data.get("batchEndingDate").toString().isEmpty()) {
+	public ResponseEntity<Map<String, Object>> createBatch(
+	    @RequestHeader("userToken") String userToken, 
+	    @RequestBody HashMap<String, Object> data
+	) {
+	    Map<String, Object> response = new HashMap<>();
 
-			response= utils.createErrorResponse("Enter the required parameters");
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-		} else {
-			response = batchService.createBatchDetails(user,data);
-			if (response.get("status").toString().equals("Error")) {
-				return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    Map<String, Object> verifiedUser = utils.validateUser(userToken);
+	    if (verifiedUser == null || verifiedUser.get("status").equals("Error")) {
+	        response = utils.createErrorResponse("User not verified");
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    }
 
-			} else {
-				return ResponseEntity.ok(response);
-			}
-		}
-		
+	    UserCredentials user = (UserCredentials) verifiedUser.get("user");
+
+	    // ✅ [MODIFIED] Authorize based on user role
+	    if (user.getRole() != 1 && user.getRole() != 2) {
+	        response = utils.createErrorResponse("User not authorized");
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+	    }
+
+	    // ✅ [UNCHANGED]
+	    if (data.get("organizationId") == null || data.get("organizationId").toString().isEmpty()) {
+	        response = utils.createErrorResponse("Missing organizationId");
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    }
+
+	    if (data.get("batchName") == null || data.get("batchName").toString().isEmpty() ||
+	        data.get("batchStartingDate") == null || data.get("batchStartingDate").toString().isEmpty() ||
+	        data.get("batchEndingDate") == null || data.get("batchEndingDate").toString().isEmpty()) {
+
+	        response = utils.createErrorResponse("Enter the required parameters");
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    } else {
+	        // ✅ [MODIFIED] Unified create/update logic
+	        response = batchService.createOrUpdateBatchDetails(user, data);
+
+	        if (response.get("status").toString().equals("Error")) {
+	            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	        } else {
+	            return ResponseEntity.ok(response);
+	        }
+	    }
 	}
+
 	
 	@GetMapping("/getBatches")
 	public ResponseEntity<Map<String, Object>> getBatches(
@@ -96,8 +105,13 @@ public class BatchController {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
 		}
 		
-		UserCredentials adminUser =(UserCredentials) verifiedUser.get("user");
-				
+		UserCredentials user = (UserCredentials) verifiedUser.get("user");
+	    int role = user.getRole(); // getting the role from userToken and authorizing 
+	    if (role != 1 && role != 2) {
+	        response = utils.createErrorResponse("Unauthorized: You are not allowed to perform this action");
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+	    }
+	    
 		if(data.get("batchId")==null || data.get("batchId").toString().isEmpty() ||
 		   data.get("userIds")==null || data.get("userIds").toString().isEmpty() ||
 		   data.get("organizationId")==null || data.get("organizationId").toString().isEmpty())
@@ -108,7 +122,7 @@ public class BatchController {
 		
 		else 
 		{
-			response = batchService.assignUserToBatch(adminUser,data);
+			response = batchService.assignUserToBatch(user,data);
 			return response.get("status").equals("Error")?
 					ResponseEntity.status(HttpStatus.CONFLICT).body(response):ResponseEntity.ok(response);
 		}
@@ -126,6 +140,13 @@ public class BatchController {
 	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
 	    }
 		
+	    UserCredentials user = (UserCredentials) verifiedUser.get("user");
+	    int role = user.getRole(); // getting the role from userToken and authorizing 
+	    if (role != 1 && role != 2) {
+	        response = utils.createErrorResponse("Unauthorized: You are not allowed to perform this action");
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+	    }
+	    
 	 // Validate input
 	    if (batchId == null) {
 	        response = utils.createErrorResponse("Missing batchId");
@@ -154,6 +175,12 @@ public class BatchController {
 	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
 	    }
 	    
+	    UserCredentials user = (UserCredentials) verifiedUser.get("user");
+	    int role = user.getRole(); // getting the role from userToken and authorizing 
+	    if (role != 1 && role != 2) {
+	        response = utils.createErrorResponse("Unauthorized: You are not allowed to perform this action");
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+	    }
 
 	    // Validate input
 	    if (data.get("batchId").toString() == null) {

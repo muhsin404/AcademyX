@@ -11,7 +11,7 @@ import com.academyx.department.model.DepartmentDetails;
 
 public interface DepartmentDetailsRepository extends JpaRepository<DepartmentDetails, Long>{
 	
-	@Query(value = "Select COUNT(u) > 0 from DepartmentDetails u where u.departmentName = :departmentName")
+	@Query(value = "Select COUNT(u) > 0 from DepartmentDetails u where u.departmentName = :departmentName AND u.status = 1")
 	boolean findDepartmentExistOrNot(@Param("departmentName") String departmentName);
 
 	@Query("SELECT d FROM DepartmentDetails d WHERE d.departmentId = :departmentId AND d.status = 1")

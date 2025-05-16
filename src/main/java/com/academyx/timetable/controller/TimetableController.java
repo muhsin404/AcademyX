@@ -42,7 +42,11 @@ public class TimetableController {
         }
 
         UserCredentials admin = (UserCredentials) validUser.get("user");
-
+	    int role = admin.getRole(); // getting the role from userToken and authorizing 
+	    if (role != 1 && role != 2) {
+	        response = utils.createErrorResponse("Unauthorized: You are not allowed to perform this action");
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+	    }
         try {
             // 2. Extract and parse times
             LocalTime startTime = LocalTime.parse((String) period.get("startTime"));
@@ -74,6 +78,7 @@ public class TimetableController {
     public ResponseEntity<Map<String,Object>> createForDay(
             @RequestHeader("userToken") String userToken,
             @RequestBody TimetableCreateRequest request) {
+        Map<String, Object> response = new HashMap<>();
 
         var validUser = utils.validateUser(userToken);
         if (validUser==null || "Error".equals(validUser.get("status"))) {
@@ -81,7 +86,12 @@ public class TimetableController {
                                  .body(utils.createErrorResponse("User not verified"));
         }
         UserCredentials admin = (UserCredentials) validUser.get("user");
-        var response = timetableService.createTimetable(admin, request);
+        int role = admin.getRole(); // getting the role from userToken and authorizing 
+	    if (role != 1 && role != 2) {
+	        response = utils.createErrorResponse("Unauthorized: You are not allowed to perform this action");
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+	    }
+         response = timetableService.createTimetable(admin, request);
         HttpStatus status = "Error".equals(response.get("status")) ? HttpStatus.CONFLICT : HttpStatus.OK;
         return ResponseEntity.status(status).body(response);
     }

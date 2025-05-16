@@ -42,12 +42,10 @@ public class OrganizationService {
 			Organizations existingOrganization = organizationRepository.findByOrganizationName(organizationName);
 
 			Organizations organization;
-			int role; // 1 = admin, 2 = sub-admin
 
 			if (existingOrganization != null) {
 				// Organization exists, assign sub-admin role for joining user
 				organization = existingOrganization;
-				role = 2;
 			} else {
 				// Organization does not exist, create a new one and assign admin role for the
 				// creator
@@ -56,7 +54,6 @@ public class OrganizationService {
 				organization.setOrganizationEmail(data.get("organizationEmail").toString());
 				organization.setWebsite(data.get("website").toString());
 				organizationRepository.save(organization);
-				role = 1;
 			}
 
 			// Check if user is already related to the organization
@@ -72,7 +69,6 @@ public class OrganizationService {
 			UserOrganizationRelation relation = new UserOrganizationRelation();
 			relation.setUser(user);
 			relation.setOrganization(organization);
-			relation.setRole(role);
 			userOrganizationRelationRepository.save(relation);
 
 			response.put("status", "success");
