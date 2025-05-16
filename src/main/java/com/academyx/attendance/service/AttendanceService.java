@@ -364,7 +364,7 @@ public class AttendanceService {
 	                    entry.getSubject().getSubjectName(),
 	                    entry.getPeriods().getStartTime(),
 	                    entry.getPeriods().getEndTime(),
-	                    entry.getPeriod().getPeriodNumber()
+	                    entry.getPeriod().getPeriodNumber() 
 	            );
 	        }).collect(Collectors.toList());
 
